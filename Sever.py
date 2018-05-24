@@ -40,21 +40,46 @@ message.isOffline = True
 message.offlineExpireTime = 1000 * 600
 message.appIdList.extend([APPID])
 
+def checkAndPush():
+    f = open("config.txt", 'rb')
+    test = int(f.readline())
+    f.close()
+    url = "http://www.nmc.cn/f/rest/real/54662?_=" + str(time.time())
+    response = requests.get(url)
+    parsed_json = json.loads(response.content)
+    print parsed_json["weather"]["temperature"]
+    if test <= int(parsed_json["weather"]["temperature"]):
+        template.title = u'报警'
+        template.text = u'设备1 ' + str(parsed_json["weather"]["temperature"])
+        message.data = template
+        ret = push.pushMessageToApp(message)
+        print ret
+
 def socket_service():
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(5.0)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        #s.bind(('127.0.0.1', 51423))
         s.bind(('198.13.44.67', 51423))
-        s.listen(10)
+        s.listen(1)
     except socket.error as msg:
         print msg
         sys.exit(1)
     print 'Waiting connection...'
 
+
     while 1:
-        conn, addr = s.accept()
-        t = threading.Thread(target=deal_data, args=(conn, addr))
-        t.start()
+        try:
+            conn, addr = s.accept()
+        except socket.timeout:
+            print "here"
+            check = threading.Timer(300, checkAndPush)
+            check.start()
+        else:
+            t = threading.Thread(target=deal_data, args=(conn, addr))
+            t.start()
+
 
 def deal_data(conn, addr):
     print 'Accept new connection from {0}'.format(addr)
@@ -90,26 +115,5 @@ def deal_data(conn, addr):
         break
 
 socket_service()
-
-while 1:
-    f = open("config.txt", 'rb')
-    test = int(f.readline())
-    f.close()
-    url = "http://www.nmc.cn/f/rest/real/54662?_=" + str(time.time())
-    response = requests.get(url)
-    parsed_json = json.loads(response.content)
-    print parsed_json["weather"]["temperature"]
-    if test >= int(parsed_json["weather"]["temperature"]):
-        template.title = u'报警'
-        template.text = u'设备1 ' + str(parsed_json["weather"]["temperature"])
-        message.data = template
-        ret = push.pushMessageToApp(message)
-        print ret
-    time.sleep(300)
-
-
-
-
-
 #if __name__ == '__main__':
 #    socket_service()
