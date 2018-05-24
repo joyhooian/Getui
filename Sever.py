@@ -54,6 +54,9 @@ def checkAndPush():
         message.data = template
         ret = push.pushMessageToApp(message)
         print ret
+    global timer
+    timer = threading.Timer(30, checkAndPush)
+    timer.start()
 
 def socket_service():
     try:
@@ -68,14 +71,14 @@ def socket_service():
         sys.exit(1)
     print 'Waiting connection...'
 
+    check = threading.Timer(1, checkAndPush)
+    check.start()
 
     while 1:
         try:
             conn, addr = s.accept()
         except socket.timeout:
             print "here"
-            check = threading.Timer(300, checkAndPush)
-            check.start()
         else:
             t = threading.Thread(target=deal_data, args=(conn, addr))
             t.start()
