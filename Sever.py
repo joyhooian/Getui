@@ -69,8 +69,8 @@ def socket_service():
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(5.0)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind(('127.0.0.1', 51423))
-        #s.bind(('198.13.44.67', 51423))
+        #s.bind(('127.0.0.1', 51423))
+        s.bind(('198.13.44.67', 51423))
         s.listen(1)
     except socket.error as msg:
         print msg
