@@ -42,15 +42,21 @@ message.appIdList.extend([APPID])
 
 def checkAndPush():
     f = open("config.txt", 'rb')
-    test = int(f.readline())
+    try:
+        temperature = int(f.readline())
+        humidity = int(f.readline())
+    except:
+        temperature = 100
+        humidity = 100
     f.close()
     url = "http://www.nmc.cn/f/rest/real/54662?_=" + str(time.time())
     response = requests.get(url)
     parsed_json = json.loads(response.content)
     print parsed_json["weather"]["temperature"]
-    if test <= int(parsed_json["weather"]["temperature"]):
+    print parsed_json["weather"]["humidity"]
+    if temperature <= int(parsed_json["weather"]["temperature"]) or humidity <= int(parsed_json["weather"]["humidity"]):
         template.title = u'报警'
-        template.text = u'设备1 ' + str(parsed_json["weather"]["temperature"])
+        template.text = u'温：' + str(parsed_json["weather"]["temperature"]) + u' 湿：' + str(parsed_json["weather"]["humidity"]) + '%'
         message.data = template
         ret = push.pushMessageToApp(message)
         print ret
@@ -63,8 +69,8 @@ def socket_service():
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(5.0)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        #s.bind(('127.0.0.1', 51423))
-        s.bind(('198.13.44.67', 51423))
+        s.bind(('127.0.0.1', 51423))
+        #s.bind(('198.13.44.67', 51423))
         s.listen(1)
     except socket.error as msg:
         print msg
